@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Módulo 1 — Presupuesto y Ahorro | CapiPal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #493C95;
+    --purple-dark: #2D2560;
+    --purple-mid: #6B5FCF;
+    --purple-light: #EEECfb;
+    --lime: #CFF54A;
+    --lime-dark: #A8CC1E;
+    --white: #FFFFFF;
+    --gray: #F7F6FF;
+    --text: #1E1A3D;
+    --text-light: #6B6494;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--purple-dark);
+    color: var(--text);
+    height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── SLIDES CONTAINER ── */
+  .slides-wrapper {
+    width: 100%;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    transform: translateX(60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(0);
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    background: var(--lime);
+    transition: width 0.4s ease;
+    z-index: 100;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: var(--purple-dark);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    z-index: 100;
+    gap: 12px;
+  }
+
+  .nav-dots {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .dot.active { background: var(--lime); width: 18px; }
+  .dot.done { background: rgba(207,245,74,0.4); }
+
+  .btn-nav {
+    width: 44px; height: 44px;
+    border-radius: 22px;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-prev {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
+  }
+  .btn-prev:hover { background: rgba(255,255,255,0.15); color: white; }
+  .btn-next {
+    background: var(--lime);
+    color: var(--purple-dark);
+    font-weight: 800;
+  }
+  .btn-next:hover { background: var(--lime-dark); }
+  .btn-nav:disabled { opacity: 0.3; cursor: default; }
+
+  /* ── SLIDE PORTADA ── */
+  .slide-cover {
+    background: linear-gradient(160deg, var(--purple) 0%, var(--purple-dark) 60%);
+    min-height: 100dvh;
+    padding: 60px 28px 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-blob {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--lime);
+    opacity: 0.08;
+  }
+  .cover-blob-1 { width: 300px; height: 300px; top: -80px; right: -80px; }
+  .cover-blob-2 { width: 200px; height: 200px; bottom: 80px; left: -60px; }
+
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(207,245,74,0.15);
+    border: 1px solid rgba(207,245,74,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    color: var(--lime);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .cover-module-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 96px;
+    color: rgba(255,255,255,0.06);
+    line-height: 1;
+    position: absolute;
+    top: 40px;
+    right: 20px;
+  }
+
+  .cover-main { position: relative; z-index: 1; }
+  .cover-label {
+    color: var(--lime);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .cover-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    line-height: 1.1;
+    color: white;
+    margin-bottom: 16px;
+  }
+  .cover-desc {
+    font-size: 15px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 8px 14px;
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .meta-chip span { font-size: 16px; }
+
+  /* ── SLIDE GENÉRICO ── */
+  .slide-content {
+    background: var(--gray);
+    min-height: 100dvh;
+    padding: 28px 24px 100px;
+  }
+
+  .slide-header {
+    background: var(--purple);
+    margin: -28px -24px 24px;
+    padding: 44px 24px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide-header::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--lime);
+    opacity: 0.12;
+  }
+  .slide-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 4px 12px;
+    color: var(--lime);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .slide-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 12px rgba(73,60,149,0.06);
+  }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 12px;
+    background: var(--purple-light);
+  }
+  .card h3 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--text-light);
+    line-height: 1.6;
+  }
+
+  .card-highlight {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+    color: white;
+  }
+  .card-highlight h3 { color: white; }
+  .card-highlight p { color: rgba(255,255,255,0.8); }
+  .card-highlight .card-icon { background: rgba(255,255,255,0.15); }
+
+  .card-lime {
+    background: var(--lime);
+  }
+  .card-lime h3 { color: var(--purple-dark); }
+  .card-lime p { color: rgba(45,37,96,0.75); }
+  .card-lime .card-icon { background: rgba(45,37,96,0.1); }
+
+  /* ── TIP BOX ── */
+  .tip-box {
+    background: #FFFBEB;
+    border: 1.5px solid #FCD34D;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .tip-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .tip-box p { font-size: 14px; color: #92400E; line-height: 1.6; font-weight: 500; }
+
+  /* ── CASO REAL ── */
+  .case-box {
+    background: linear-gradient(135deg, #E8F5E9, #F1F8E9);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+    border-left: 4px solid #4CAF50;
+  }
+  .case-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #2E7D32;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .case-box p {
+    font-size: 14px;
+    color: #1B5E20;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* ── ACTIVIDAD ── */
+  .activity-box {
+    background: var(--purple-light);
+    border: 2px solid var(--purple-mid);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .activity-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--purple);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .activity-box p, .activity-box li {
+    font-size: 14px;
+    color: var(--purple-dark);
+    line-height: 1.7;
+  }
+  .activity-box ol, .activity-box ul {
+    padding-left: 18px;
+    margin-top: 6px;
+  }
+  .activity-box li { margin-bottom: 4px; }
+
+  /* ── VIDEO CARD ── */
+  .video-card {
+    background: var(--purple-dark);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .video-thumb {
+    height: 160px;
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .video-thumb-emoji { font-size: 48px; opacity: 0.6; }
+  .video-play {
+    position: absolute;
+    width: 56px; height: 56px;
+    border-radius: 28px;
+    background: var(--lime);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .video-duration {
+    position: absolute;
+    bottom: 10px; right: 12px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .video-info {
+    padding: 14px 16px 16px;
+  }
+  .video-info h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+  }
+  .video-info p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ── QUIZ ── */
+  .quiz-option {
+    background: white;
+    border: 2px solid #E5E4F7;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .quiz-option:hover { border-color: var(--purple-mid); background: var(--purple-light); }
+  .quiz-option.correct { border-color: #4CAF50; background: #E8F5E9; color: #1B5E20; }
+  .quiz-option.wrong { border-color: #EF5350; background: #FFEBEE; color: #B71C1C; }
+  .quiz-letter {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: var(--purple-light);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    color: var(--purple);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .quiz-feedback {
+    text-align: center;
+    padding: 20px;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback-emoji { font-size: 48px; margin-bottom: 10px; }
+  .quiz-feedback h3 { font-size: 20px; font-weight: 800; color: var(--purple-dark); margin-bottom: 8px; }
+  .quiz-feedback p { font-size: 14px; color: var(--text-light); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--purple-mid);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--purple-light);
+  }
+
+  /* ── SPLIT ROW ── */
+  .split-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .split-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(73,60,149,0.06);
+  }
+  .split-card .emoji { font-size: 28px; margin-bottom: 8px; }
+  .split-card h4 { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .split-card p { font-size: 12px; color: var(--text-light); line-height: 1.5; }
+
+  /* ── REGLA 502030 ── */
+  .rule-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(73,60,149,0.06);
+  }
+  .rule-pct {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--purple);
+    flex-shrink: 0;
+    min-width: 70px;
+  }
+  .rule-bar {
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .rule-info h4 { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+  .rule-info p { font-size: 12px; color: var(--text-light); }
+
+  /* ── RETO SEMANAS ── */
+  .reto-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .reto-item {
+    background: white;
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(73,60,149,0.06);
+  }
+  .reto-item .week { font-size: 11px; color: var(--text-light); font-weight: 600; }
+  .reto-item .amount { font-size: 13px; font-weight: 800; color: var(--purple); }
+
+  /* ── COMPLETADO ── */
+  .completion-slide {
+    background: linear-gradient(160deg, var(--purple) 0%, var(--purple-dark) 100%);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 28px 100px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .completion-blob {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--lime);
+    opacity: 0.06;
+  }
+  .completion-badge {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--lime);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    margin-bottom: 24px;
+    box-shadow: 0 0 0 16px rgba(207,245,74,0.15);
+  }
+  .completion-slide h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: white;
+    margin-bottom: 12px;
+  }
+  .completion-slide p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+    max-width: 300px;
+    margin-bottom: 32px;
+  }
+  .completion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .completion-chip {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    color: rgba(255,255,255,0.8);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ── LOGO ── */
+  .capipal-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 800;
+    color: white;
+  }
+  .logo-symbol {
+    width: 32px; height: 32px;
+    background: var(--lime);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  /* ── SCROLL HINT ── */
+  .scroll-hint {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 11px;
+    padding: 8px;
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    writing-mode: vertical-rl;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="slides-wrapper" id="slidesWrapper">
+
+  <!-- ── SLIDE 0: PORTADA ── -->
+  <div class="slide slide-cover active" id="slide-0">
+    <div class="cover-blob cover-blob-1"></div>
+    <div class="cover-blob cover-blob-2"></div>
+    <div class="cover-module-num">01</div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="capipal-logo">
+        <div class="logo-symbol">💰</div>
+        CapiPal
+      </div>
+      <div class="cover-badge">
+        <span>📚</span> Educación Financiera
+      </div>
+    </div>
+
+    <div class="cover-main">
+      <div class="cover-label">Módulo 01 · 3 Sesiones</div>
+      <div class="cover-title">Presupuesto<br>y Ahorro</div>
+      <p class="cover-desc">Aprende a organizar tu plata, identificar en qué se va y empezar a ahorrar desde tu próximo pago.</p>
+    </div>
+
+    <div>
+      <div class="cover-meta">
+        <div class="meta-chip"><span>⏱</span> 3 semanas</div>
+        <div class="meta-chip"><span>🎯</span> 3 sesiones</div>
+        <div class="meta-chip"><span>✏️</span> 3 actividades</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 1: QUÉ VAS A APRENDER ── -->
+  <div class="slide slide-content" id="slide-1">
+    <div class="slide-header">
+      <div class="slide-header-badge">📋 En este módulo</div>
+      <h2>¿Qué vas a aprender?</h2>
+    </div>
+
+    <div class="split-row">
+      <div class="split-card">
+        <div class="emoji">💡</div>
+        <h4>Sesión 1</h4>
+        <p>¿A dónde se va mi plata?</p>
+      </div>
+      <div class="split-card">
+        <div class="emoji">⚖️</div>
+        <h4>Sesión 2</h4>
+        <p>La regla del 50/30/20</p>
+      </div>
+    </div>
+    <div class="split-row">
+      <div class="split-card">
+        <div class="emoji">🏦</div>
+        <h4>Sesión 3</h4>
+        <p>Herramientas para ahorrar</p>
+      </div>
+      <div class="split-card">
+        <div class="emoji">🏆</div>
+        <h4>Al final</h4>
+        <p>Quiz de 4 preguntas</p>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-icon">💡</div>
+      <p><strong>No necesitas saber nada de finanzas</strong> para empezar. Solo necesitas tu celular y las ganas de mejorar tu situación.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2: SESIÓN 1 INTRO ── -->
+  <div class="slide slide-content" id="slide-2">
+    <div class="slide-header">
+      <div class="slide-header-badge">📖 Sesión 1</div>
+      <h2>¿A dónde se va mi plata?</h2>
+    </div>
+
+    <div class="section-title">Video de la sesión</div>
+    <div class="video-card">
+      <div class="video-thumb">
+        <div class="video-thumb-emoji">💸</div>
+        <div class="video-play">▶</div>
+        <div class="video-duration">2:45</div>
+      </div>
+      <div class="video-info">
+        <h3>¿A dónde se va mi plata? — Presupuesto básico</h3>
+        <p>Sesión 1 · Módulo 1 · CapiPal</p>
+      </div>
+    </div>
+
+    <div class="section-title">Contenido clave</div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>¿Qué es un presupuesto?</h3>
+      <p>Anotar cuánto entra y cuánto sale. No necesitas ser contador — una libreta o el bloc de notas del celular sirve.</p>
+    </div>
+    <div class="card card-highlight">
+      <div class="card-icon">⚠️</div>
+      <h3>Las fugas de dinero</h3>
+      <p>Gastos pequeños que parecen inofensivos pero al sumar el mes son enormes.<br><br><strong>Ejemplo:</strong> $3.000 de tinto diario = $90.000 al mes = $1.080.000 al año.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: INGRESOS VS GASTOS ── -->
+  <div class="slide slide-content" id="slide-3">
+    <div class="slide-header">
+      <div class="slide-header-badge">📖 Sesión 1 — Continuación</div>
+      <h2>Ingresos vs. Gastos</h2>
+    </div>
+
+    <div class="section-title">Aprende a clasificar</div>
+
+    <div class="card">
+      <div class="card-icon">💚</div>
+      <h3>Ingresos</h3>
+      <p>Todo lo que entra: salario, horas extra, rebusque, ventas de tus productos.</p>
+    </div>
+
+    <div class="split-row">
+      <div class="split-card" style="background: #EEF2FF;">
+        <div class="emoji">📅</div>
+        <h4>Gastos fijos</h4>
+        <p>Llegan iguales cada mes. Arriendo, cuota del crédito.</p>
+      </div>
+      <div class="split-card" style="background: #FFF7ED;">
+        <div class="emoji">🔄</div>
+        <h4>Gastos variables</h4>
+        <p>Cambian cada mes. Mercado, transporte, salidas.</p>
+      </div>
+    </div>
+
+    <div class="case-box">
+      <div class="case-label">📖 Caso real</div>
+      <p>"Carlos es escolta y gana $1.800.000/mes. Al hacer su presupuesto descubrió que gastaba $280.000 en picadas en el trabajo. Redujo eso a $80.000 y empezó a ahorrar $200.000/mes."</p>
+    </div>
+
+    <div class="activity-box">
+      <div class="activity-label">✏️ Actividad práctica</div>
+      <p>Esta semana anota <strong>TODOS</strong> tus gastos — hasta el chicle. Después suma e identifica 2 gastos que podrías reducir.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4: SESIÓN 2 ── -->
+  <div class="slide slide-content" id="slide-4">
+    <div class="slide-header">
+      <div class="slide-header-badge">📖 Sesión 2</div>
+      <h2>La regla del 50/30/20</h2>
+    </div>
+
+    <div class="section-title">Video de la sesión</div>
+    <div class="video-card">
+      <div class="video-thumb">
+        <div class="video-thumb-emoji">⚖️</div>
+        <div class="video-play">▶</div>
+        <div class="video-duration">3:10</div>
+      </div>
+      <div class="video-info">
+        <h3>La regla 50/30/20 — Cómo distribuir tu salario</h3>
+        <p>Sesión 2 · Módulo 1 · CapiPal</p>
+      </div>
+    </div>
+
+    <div class="section-title">La regla explicada</div>
+
+    <div class="rule-row">
+      <div class="rule-pct">50%</div>
+      <div class="rule-info">
+        <div class="rule-bar" style="background: #493C95; width: 50%;"></div>
+        <h4>Necesidades</h4>
+        <p>Arriendo, servicios, comida, transporte</p>
+      </div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-pct">30%</div>
+      <div class="rule-info">
+        <div class="rule-bar" style="background: #6B5FCF; width: 30%;"></div>
+        <h4>Deseos</h4>
+        <p>Salidas, ropa, entretenimiento</p>
+      </div>
+    </div>
+    <div class="rule-row" style="border: 2px solid var(--lime);">
+      <div class="rule-pct" style="color: var(--lime-dark);">20%</div>
+      <div class="rule-info">
+        <div class="rule-bar" style="background: var(--lime); width: 20%;"></div>
+        <h4>Ahorro + Deudas</h4>
+        <p>Fondo de emergencia, pago de créditos</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5: FONDO DE EMERGENCIA ── -->
+  <div class="slide slide-content" id="slide-5">
+    <div class="slide-header">
+      <div class="slide-header-badge">📖 Sesión 2 — Continuación</div>
+      <h2>Fondo de emergencia</h2>
+    </div>
+
+    <div class="card card-highlight">
+      <div class="card-icon">🛡️</div>
+      <h3>¿Qué es?</h3>
+      <p>Tener guardado entre 1 y 3 salarios para imprevistos. Sin este fondo, cualquier gasto inesperado te lleva al crédito.</p>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-icon">💡</div>
+      <p><strong>¿No puedes ahorrar el 20%?</strong> No pasa nada. Empieza con el 5%. Lo importante es el hábito. <strong>$50.000/mes durante un año = $600.000 de emergencia.</strong></p>
+    </div>
+
+    <div class="case-box">
+      <div class="case-label">📖 Caso real</div>
+      <p>"María trabaja en aseo y gana $1.300.000. Aplica 50/30/20: en 6 meses tuvo $1.560.000 guardados para emergencias."</p>
+    </div>
+
+    <div class="activity-box">
+      <div class="activity-label">✏️ Actividad</div>
+      <p>Calcula tu 50/30/20:</p>
+      <ul style="margin-top:8px; padding-left:20px;">
+        <li>Mi salario: $_________</li>
+        <li>50% necesidades: $_________</li>
+        <li>30% deseos: $_________</li>
+        <li>20% ahorro: $_________</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: SESIÓN 3 ── -->
+  <div class="slide slide-content" id="slide-6">
+    <div class="slide-header">
+      <div class="slide-header-badge">📖 Sesión 3</div>
+      <h2>Herramientas para ahorrar sin sufrir</h2>
+    </div>
+
+    <div class="section-title">Video de la sesión</div>
+    <div class="video-card">
+      <div class="video-thumb">
+        <div class="video-thumb-emoji">🏦</div>
+        <div class="video-play">▶</div>
+        <div class="video-duration">3:30</div>
+      </div>
+      <div class="video-info">
+        <h3>4 maneras de ahorrar desde hoy sin sufrir</h3>
+        <p>Sesión 3 · Módulo 1 · CapiPal</p>
+      </div>
+    </div>
+
+    <div class="section-title">Herramientas que ya existen</div>
+    <div class="split-row">
+      <div class="split-card">
+        <div class="emoji">✉️</div>
+        <h4>Método del sobre</h4>
+        <p>Divide tu efectivo en sobres al inicio del mes. Cuando se acaba, ya no hay más.</p>
+      </div>
+      <div class="split-card">
+        <div class="emoji">📱</div>
+        <h4>Alcancías digitales</h4>
+        <p>Nequi y Daviplata tienen "bolsillos" para guardar plata separada.</p>
+      </div>
+    </div>
+    <div class="split-row">
+      <div class="split-card">
+        <div class="emoji">🔁</div>
+        <h4>Ahorro automático</h4>
+        <p>Programa una transferencia el día que te pagan. Ahorras antes de gastar.</p>
+      </div>
+      <div class="split-card" style="background: var(--lime);">
+        <div class="emoji">📅</div>
+        <h4 style="color: var(--purple-dark);">Reto 52 semanas</h4>
+        <p style="color: rgba(45,37,96,0.7);">Al final del año: <strong style="color: var(--purple-dark);">$1.378.000</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7: RETO 52 SEMANAS ── -->
+  <div class="slide slide-content" id="slide-7">
+    <div class="slide-header">
+      <div class="slide-header-badge">🎯 Reto</div>
+      <h2>Las 52 semanas</h2>
+    </div>
+
+    <div class="card card-lime">
+      <h3>¿Cómo funciona?</h3>
+      <p>Semana 1 ahorra $1.000 · Semana 2 ahorra $2.000 · Semana 3 ahorra $3.000... y así hasta la semana 52 con $52.000.<br><br><strong>Total al año: $1.378.000</strong> 🎉</p>
+    </div>
+
+    <div class="section-title">Primeras semanas</div>
+    <div class="reto-grid">
+      <div class="reto-item"><div class="week">Sem 1</div><div class="amount">$1.000</div></div>
+      <div class="reto-item"><div class="week">Sem 2</div><div class="amount">$2.000</div></div>
+      <div class="reto-item"><div class="week">Sem 3</div><div class="amount">$3.000</div></div>
+      <div class="reto-item"><div class="week">Sem 4</div><div class="amount">$4.000</div></div>
+      <div class="reto-item"><div class="week">Sem 5</div><div class="amount">$5.000</div></div>
+      <div class="reto-item"><div class="week">Sem 6</div><div class="amount">$6.000</div></div>
+      <div class="reto-item"><div class="week">Sem 12</div><div class="amount">$12.000</div></div>
+      <div class="reto-item" style="background: var(--lime);"><div class="week">Sem 52</div><div class="amount" style="color: var(--purple-dark);">$52.000</div></div>
+    </div>
+
+    <div class="case-box">
+      <div class="case-label">📖 Caso real</div>
+      <p>"Don Jorge, panadero de 52 años, empezó el reto. Al terminar tuvo plata para el mercado navideño sin necesitar crédito."</p>
+    </div>
+
+    <div class="activity-box">
+      <div class="activity-label">✏️ Actividad final</div>
+      <p>Elige <strong>UNA</strong> herramienta de ahorro y comprométete a usarla este mes. ¿Cuál vas a usar y cuánto vas a ahorrar esta semana?</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8: QUIZ ── -->
+  <div class="slide slide-content" id="slide-8">
+    <div class="slide-header">
+      <div class="slide-header-badge">🏆 Evaluación</div>
+      <h2>Quiz del Módulo</h2>
+    </div>
+
+    <p style="font-size:14px; color: var(--text-light); margin-bottom:20px; line-height:1.6;">Responde las 4 preguntas para completar el módulo y ganar tu insignia.</p>
+
+    <div id="quiz-container">
+      <div id="q1" class="quiz-question">
+        <p style="font-size:15px; font-weight:700; color: var(--text); margin-bottom:14px;">1. ¿Qué es un presupuesto?</p>
+        <div class="quiz-option" onclick="checkAnswer(this, true, 1)">
+          <div class="quiz-letter">A</div>
+          Anotar cuánto entra y cuánto sale de tu dinero
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 1)">
+          <div class="quiz-letter">B</div>
+          Un crédito del banco para emergencias
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 1)">
+          <div class="quiz-letter">C</div>
+          Una cuenta de ahorros
+        </div>
+      </div>
+
+      <div id="q2" class="quiz-question" style="display:none;">
+        <p style="font-size:15px; font-weight:700; color: var(--text); margin-bottom:14px;">2. En la regla 50/30/20, ¿qué representa el 20%?</p>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 2)">
+          <div class="quiz-letter">A</div>
+          Gastos de entretenimiento y salidas
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true, 2)">
+          <div class="quiz-letter">B</div>
+          Ahorro y pago de deudas
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 2)">
+          <div class="quiz-letter">C</div>
+          Comida y transporte
+        </div>
+      </div>
+
+      <div id="q3" class="quiz-question" style="display:none;">
+        <p style="font-size:15px; font-weight:700; color: var(--text); margin-bottom:14px;">3. ¿Cuánto ahorras con el reto de las 52 semanas?</p>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 3)">
+          <div class="quiz-letter">A</div>
+          $500.000
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 3)">
+          <div class="quiz-letter">B</div>
+          $800.000
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true, 3)">
+          <div class="quiz-letter">C</div>
+          $1.378.000
+        </div>
+      </div>
+
+      <div id="q4" class="quiz-question" style="display:none;">
+        <p style="font-size:15px; font-weight:700; color: var(--text); margin-bottom:14px;">4. ¿Para qué sirve un fondo de emergencia?</p>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 4)">
+          <div class="quiz-letter">A</div>
+          Para comprar cosas que quiero pero no necesito
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true, 4)">
+          <div class="quiz-letter">B</div>
+          Para cubrir gastos inesperados sin recurrir a créditos
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false, 4)">
+          <div class="quiz-letter">C</div>
+          Para pagar el arriendo cada mes
+        </div>
+      </div>
+
+      <div class="quiz-feedback" id="quiz-feedback">
+        <div class="quiz-feedback-emoji" id="quiz-emoji">🎉</div>
+        <h3 id="quiz-title">¡Excelente!</h3>
+        <p id="quiz-desc">Completaste el Módulo 1. ¡Sigue así!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 9: COMPLETADO ── -->
+  <div class="slide completion-slide" id="slide-9">
+    <div class="completion-blob" style="width:300px;height:300px;top:-100px;right:-100px;"></div>
+    <div class="completion-blob" style="width:200px;height:200px;bottom:100px;left:-60px;"></div>
+
+    <div class="completion-badge">🏅</div>
+
+    <h2>¡Módulo 1<br>completado!</h2>
+    <p>Ahora sabes cómo organizar tu dinero y tienes las herramientas para empezar a ahorrar desde hoy.</p>
+
+    <div class="completion-chips">
+      <div class="completion-chip">✅ Presupuesto básico</div>
+      <div class="completion-chip">✅ Regla 50/30/20</div>
+      <div class="completion-chip">✅ Fondo de emergencia</div>
+      <div class="completion-chip">✅ Herramientas de ahorro</div>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; width: 100%; max-width: 340px; margin-bottom: 16px;">
+      <p style="color: rgba(255,255,255,0.5); font-size:12px; text-transform: uppercase; letter-spacing:0.1em; font-weight:700; margin-bottom:8px;">Siguiente módulo</p>
+      <p style="color: white; font-size: 16px; font-weight: 700;">Módulo 2 — Cómo Usar Bien el Microcrédito →</p>
+    </div>
+
+    <p style="color: var(--lime); font-size: 13px; font-weight: 700;">www.capipal.com.co</p>
+  </div>
+
+</div><!-- end slides-wrapper -->
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <button class="btn-nav btn-prev" id="btnPrev" onclick="changeSlide(-1)" disabled>←</button>
+  <div class="nav-dots" id="navDots"></div>
+  <button class="btn-nav btn-next" id="btnNext" onclick="changeSlide(1)">→</button>
+</nav>
+
+<script>
+  const TOTAL = 10;
+  let current = 0;
+  let quizAnswered = [false, false, false, false];
+  let quizScore = 0;
+  let currentQuestion = 1;
+
+  function updateUI() {
+    // Progress bar
+    document.getElementById('progressBar').style.width = ((current + 1) / TOTAL * 100) + '%';
+
+    // Buttons
+    document.getElementById('btnPrev').disabled = current === 0;
+    const isQuiz = current === 8;
+    const allAnswered = quizAnswered.every(Boolean);
+    document.getElementById('btnNext').disabled = (isQuiz && !allAnswered) || current === TOTAL - 1;
+
+    // Dots
+    const dotsEl = document.getElementById('navDots');
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < TOTAL; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === current ? ' active' : (i < current ? ' done' : ''));
+      d.onclick = () => goTo(i);
+      dotsEl.appendChild(d);
+    }
+  }
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= TOTAL) return;
+    const prev = document.getElementById('slide-' + current);
+    prev.classList.remove('active');
+    prev.classList.add('exit');
+    setTimeout(() => prev.classList.remove('exit'), 400);
+    current = idx;
+    const next = document.getElementById('slide-' + current);
+    next.classList.add('active');
+    next.scrollTop = 0;
+    updateUI();
+  }
+
+  function changeSlide(dir) {
+    goTo(current + dir);
+  }
+
+  // Swipe
+  let touchStartX = 0;
+  document.getElementById('slidesWrapper').addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  document.getElementById('slidesWrapper').addEventListener('touchend', e => {
+    const dx = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(dx) > 50) changeSlide(dx > 0 ? 1 : -1);
+  }, { passive: true });
+
+  // Quiz
+  function checkAnswer(el, isCorrect, qNum) {
+    if (quizAnswered[qNum - 1]) return;
+    quizAnswered[qNum - 1] = true;
+    el.classList.add(isCorrect ? 'correct' : 'wrong');
+    if (isCorrect) {
+      quizScore++;
+      el.querySelector('.quiz-letter').textContent = '✓';
+    } else {
+      el.querySelector('.quiz-letter').textContent = '✗';
+      // Show correct answer
+      const opts = el.parentElement.querySelectorAll('.quiz-option');
+      opts.forEach(o => { if (o !== el) o.style.opacity = '0.4'; });
+    }
+
+    setTimeout(() => {
+      if (qNum < 4) {
+        document.getElementById('q' + qNum).style.display = 'none';
+        document.getElementById('q' + (qNum + 1)).style.display = 'block';
+      } else {
+        // Show feedback
+        document.querySelectorAll('.quiz-question').forEach(q => q.style.display = 'none');
+        const fb = document.getElementById('quiz-feedback');
+        fb.classList.add('show');
+        if (quizScore === 4) {
+          document.getElementById('quiz-emoji').textContent = '🏆';
+          document.getElementById('quiz-title').textContent = '¡Perfecto! 4/4';
+          document.getElementById('quiz-desc').textContent = 'Dominaste el Módulo 1. ¡Eres un crack de las finanzas!';
+        } else if (quizScore >= 2) {
+          document.getElementById('quiz-emoji').textContent = '👍';
+          document.getElementById('quiz-title').textContent = `Bien: ${quizScore}/4`;
+          document.getElementById('quiz-desc').textContent = 'Buen trabajo. Repasa las sesiones para reforzar lo que aprendiste.';
+        } else {
+          document.getElementById('quiz-emoji').textContent = '💪';
+          document.getElementById('quiz-title').textContent = `Sigue adelante: ${quizScore}/4`;
+          document.getElementById('quiz-desc').textContent = 'Te recomendamos repasar el módulo antes de continuar.';
+        }
+        updateUI();
+      }
+    }, 600);
+  }
+
+  // Init
+  updateUI();
+</script>
+</body>
+</html>
